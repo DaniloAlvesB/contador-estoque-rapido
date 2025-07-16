@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contador de Estoque Rápido</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'truffle': {
+                            50: '#fdf8f6',
+                            100: '#f2e8e5',
+                            200: '#ecd0cc',
+                            300: '#e0aea9',
+                            400: '#d08176',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="max-w-md mx-auto bg-white min-h-screen">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-amber-500 to-orange-500 text-white p-4 shadow-lg">
+            <div class="flex items-center justify-center gap-3">
+                <img src="logo.png" alt="Logo" class="w-12 h-12 filter brightness-0 invert">
+                <div class="text-center">
+                    <h1 class="text-xl font-bold">Contador de Estoque</h1>
+                    <p class="text-sm opacity-90">Controle rápido para vendas</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Item Button -->
+        <div class="p-4 bg-white border-b border-gray-200">
+            <button 
+                onclick="openModal()" 
+                class="w-full bg-amber-500 hover:bg-amber-600 text-white py-4 rounded-lg font-semibold transition-colors text-lg"
+            >
+                + Lançar item
+            </button>
+        </div>
+
+        <!-- Stats -->
+        <div class="p-4 bg-gray-50 border-b border-gray-200">
+            <div class="flex justify-between text-sm text-gray-600">
+                <span>Total de itens: <span id="totalItems" class="font-semibold">0</span></span>
+                <span>Total em estoque: <span id="totalQuantity" class="font-semibold">0</span></span>
+            </div>
+        </div>
+
+        <!-- Items List -->
+        <div id="itemsList" class="pb-20">
+            <!-- Items will be rendered here -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="text-center py-12 px-4 text-gray-500">
+            <div class="text-6xl mb-4">📦</div>
+            <h3 class="text-lg font-semibold mb-2">Nenhum item adicionado</h3>
+            <p class="text-sm">Adicione itens ao seu estoque para começar</p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="fixed bottom-4 left-4 right-4 max-w-md mx-auto space-y-2">
+            <button 
+                onclick="openStatsModal()" 
+                class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold transition-colors"
+                id="statsButton"
+                style="display: none;"
+            >
+                📈 Estatísticas de venda
+            </button>
+            <button 
+                onclick="clearAllItems()" 
+                class="w-full bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg font-semibold transition-colors"
+                id="clearButton"
+                style="display: none;"
+            >
+                Limpar Tudo
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" style="display: none;">
+        <div class="bg-white rounded-lg max-w-md w-full p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800">Lançar Item</h2>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nome do item</label>
+                    <input 
+                        type="text" 
+                        id="modalItemName" 
+                        placeholder="Ex: Trufa de Chocolate" 
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    >
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Quantidade</label>
+                    <input 
+                        type="number" 
+                        id="modalItemQuantity" 
+                        placeholder="Quantidade" 
+                        min="1" 
+                        value="1"
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    >
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Valor unitário (R$)</label>
+                    <input 
+                        type="number" 
+                        id="modalItemPrice" 
+                        placeholder="Ex: 5.50" 
+                        min="0" 
+                        step="0.01"
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    >
+                </div>
+                
+                <div class="flex space-x-3 pt-4">
+                    <button 
+                        onclick="closeModal()" 
+                        class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-lg font-semibold transition-colors"
+                    >
+                        Cancelar
+                    </button>
+                    <button 
+                        onclick="addItemFromModal()" 
+                        class="flex-1 bg-amber-500 hover:bg-amber-600 text-white py-3 rounded-lg font-semibold transition-colors"
+                    >
+                        Adicionar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Modal -->
+    <div id="statsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" style="display: none;">
+        <div class="bg-white rounded-lg max-w-md w-full p-6 max-h-96 overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800">📈 Estatísticas de Venda</h2>
+                <button onclick="closeStatsModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+            
+            <div id="statsContent">
+                <!-- Stats content will be rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let items = [];
+        let salesHistory = [];  // Track all sales
+
+        // Load items from localStorage on page load
+        window.onload = function() {
+            loadItems();
+            loadSalesHistory();
+            renderItems();
+            updateStats();
+        };
+
+        function loadItems() {
+            const savedItems = localStorage.getItem('stockItems');
+            if (savedItems) {
+                items = JSON.parse(savedItems);
+            }
+        }
+
+        function saveItems() {
+            localStorage.setItem('stockItems', JSON.stringify(items));
+        }
+
+        function saveSalesHistory() {
+            localStorage.setItem('salesHistory', JSON.stringify(salesHistory));
+        }
+
+        function loadSalesHistory() {
+            const savedSales = localStorage.getItem('salesHistory');
+            if (savedSales) {
+                salesHistory = JSON.parse(savedSales);
+            }
+        }
+
+        function openModal() {
+            document.getElementById('modal').style.display = 'flex';
+            document.getElementById('modalItemName').focus();
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+            // Clear inputs
+            document.getElementById('modalItemName').value = '';
+            document.getElementById('modalItemQuantity').value = '1';
+            document.getElementById('modalItemPrice').value = '';
+        }
+
+        function addItemFromModal() {
+            const nameInput = document.getElementById('modalItemName');
+            const quantityInput = document.getElementById('modalItemQuantity');
+            const priceInput = document.getElementById('modalItemPrice');
+            
+            const name = nameInput.value.trim();
+            const quantity = parseInt(quantityInput.value) || 0;
+            const price = parseFloat(priceInput.value) || 0;
+
+            if (!name) {
+                alert('Por favor, digite o nome do item');
+                return;
+            }
+
+            if (quantity <= 0) {
+                alert('A quantidade deve ser maior que zero');
+                return;
+            }
+
+            if (price < 0) {
+                alert('O valor deve ser maior ou igual a zero');
+                return;
+            }
+
+            // Check if item already exists
+            const existingItem = items.find(item => item.name.toLowerCase() === name.toLowerCase());
+            
+            if (existingItem) {
+                // Check if there are sales for this item to undo
+                const itemSales = salesHistory.filter(sale => sale.itemName.toLowerCase() === name.toLowerCase());
+                
+                if (itemSales.length > 0) {
+                    const undoSale = confirm(`Este item já existe. Deseja desfazer uma venda de "${name}" ao invés de adicionar ao estoque?`);
+                    
+                    if (undoSale) {
+                        undoLastSale(name);
+                        closeModal();
+                        return;
+                    }
+                }
+                
+                existingItem.quantity += quantity;
+                // Update price if provided
+                if (price > 0) {
+                    existingItem.price = price;
+                }
+            } else {
+                items.push({
+                    id: Date.now(),
+                    name: name,
+                    quantity: quantity,
+                    price: price || 0
+                });
+            }
+
+            saveItems();
+            renderItems();
+            updateStats();
+
+            closeModal();
+        }
+
+        function updateQuantity(id, change) {
+            const item = items.find(item => item.id === id);
+            if (item) {
+                const oldQuantity = item.quantity;
+                item.quantity += change;
+                if (item.quantity < 0) {
+                    item.quantity = 0;
+                }
+                
+                // Track sale if quantity decreased
+                if (change < 0 && oldQuantity > item.quantity) {
+                    const soldQuantity = oldQuantity - item.quantity;
+                    const saleValue = soldQuantity * (item.price || 0);
+                    
+                    salesHistory.push({
+                        id: Date.now(),
+                        itemName: item.name,
+                        quantity: soldQuantity,
+                        unitPrice: item.price || 0,
+                        totalValue: saleValue,
+                        date: new Date().toLocaleString('pt-BR')
+                    });
+                    
+                    saveSalesHistory();
+                }
+                
+                saveItems();
+                renderItems();
+                updateStats();
+            }
+        }
+
+        function removeItem(id) {
+            items = items.filter(item => item.id !== id);
+            saveItems();
+            renderItems();
+            updateStats();
+        }
+
+        function undoLastSale(itemName) {
+            // Find the most recent sale for this item
+            const itemSales = salesHistory.filter(sale => sale.itemName.toLowerCase() === itemName.toLowerCase());
+            
+            if (itemSales.length === 0) {
+                alert('Nenhuma venda encontrada para este item');
+                return;
+            }
+            
+            // Get the most recent sale (last in the array)
+            const lastSale = itemSales[itemSales.length - 1];
+            
+            // Find the item in inventory
+            const item = items.find(item => item.name.toLowerCase() === itemName.toLowerCase());
+            
+            if (item) {
+                // Add back the sold quantity
+                item.quantity += lastSale.quantity;
+                
+                // Remove the sale from history
+                const saleIndex = salesHistory.findIndex(sale => sale.id === lastSale.id);
+                if (saleIndex !== -1) {
+                    salesHistory.splice(saleIndex, 1);
+                }
+                
+                saveItems();
+                saveSalesHistory();
+                renderItems();
+                updateStats();
+                
+                alert(`Venda desfeita: ${lastSale.quantity}x ${itemName} (R$ ${lastSale.totalValue.toFixed(2)}) foi devolvido ao estoque.`);
+            } else {
+                alert('Item não encontrado no estoque');
+            }
+        }
+
+        function renderItems() {
+            const itemsList = document.getElementById('itemsList');
+            const emptyState = document.getElementById('emptyState');
+            const clearButton = document.getElementById('clearButton');
+            const statsButton = document.getElementById('statsButton');
+
+            if (items.length === 0) {
+                itemsList.innerHTML = '';
+                emptyState.style.display = 'block';
+                clearButton.style.display = 'none';
+                statsButton.style.display = 'none';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            clearButton.style.display = 'block';
+            statsButton.style.display = 'block';
+
+            itemsList.innerHTML = items.map(item => {
+                const isOutOfStock = item.quantity === 0;
+                return `
+                <div class="border-b border-gray-100 p-4 ${isOutOfStock ? 'bg-gray-50' : 'bg-white'}">
+                    <div class="flex justify-between items-center">
+                        <div class="flex-1">
+                            <h3 class="font-semibold ${isOutOfStock ? 'text-gray-500' : 'text-gray-800'}">${item.name}</h3>
+                            <p class="text-sm ${isOutOfStock ? 'text-red-500 font-medium' : 'text-gray-500'}">
+                                ${isOutOfStock ? '❌ Esgotado' : 'Em estoque'}
+                            </p>
+                            ${item.price > 0 ? `<p class="text-xs text-blue-600 font-medium">R$ ${item.price.toFixed(2)}</p>` : ''}
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <button 
+                                onclick="updateQuantity(${item.id}, -1)"
+                                class="w-10 h-10 ${isOutOfStock ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-red-100 hover:bg-red-200 text-red-600'} rounded-full flex items-center justify-center font-bold transition-colors"
+                                ${isOutOfStock ? 'disabled' : ''}
+                            >
+                                −
+                            </button>
+                            <span class="font-bold text-lg min-w-12 text-center ${isOutOfStock ? 'text-red-500' : ''}">${item.quantity}</span>
+                            <button 
+                                onclick="updateQuantity(${item.id}, 1)"
+                                class="w-10 h-10 bg-green-100 hover:bg-green-200 text-green-600 rounded-full flex items-center justify-center font-bold transition-colors"
+                            >
+                                +
+                            </button>
+                        </div>
+                    </div>
+                    ${!isOutOfStock ? `
+                    <div class="mt-2 flex justify-end">
+                        <button 
+                            onclick="removeItem(${item.id})"
+                            class="text-xs text-red-500 hover:text-red-700 transition-colors"
+                        >
+                            Remover item
+                        </button>
+                    </div>
+                    ` : ''}
+                </div>
+                `;
+            }).join('');
+        }
+
+        function updateStats() {
+            const totalItems = items.length;
+            const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
+
+            document.getElementById('totalItems').textContent = totalItems;
+            document.getElementById('totalQuantity').textContent = totalQuantity;
+        }
+
+        function openStatsModal() {
+            renderStats();
+            document.getElementById('statsModal').style.display = 'flex';
+        }
+
+        function closeStatsModal() {
+            document.getElementById('statsModal').style.display = 'none';
+        }
+
+        function renderStats() {
+            const statsContent = document.getElementById('statsContent');
+            
+            if (salesHistory.length === 0) {
+                statsContent.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <div class="text-4xl mb-2">📈</div>
+                        <p>Nenhuma venda registrada ainda</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const totalSales = salesHistory.reduce((sum, sale) => sum + sale.totalValue, 0);
+            const totalItemsSold = salesHistory.reduce((sum, sale) => sum + sale.quantity, 0);
+            
+            // Group sales by item
+            const salesByItem = {};
+            salesHistory.forEach(sale => {
+                if (!salesByItem[sale.itemName]) {
+                    salesByItem[sale.itemName] = { quantity: 0, value: 0 };
+                }
+                salesByItem[sale.itemName].quantity += sale.quantity;
+                salesByItem[sale.itemName].value += sale.totalValue;
+            });
+
+            statsContent.innerHTML = `
+                <div class="space-y-4">
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <h3 class="font-bold text-green-800 mb-2">Resumo Geral</h3>
+                        <div class="space-y-1 text-sm">
+                            <p><span class="font-medium">Total vendido:</span> R$ ${totalSales.toFixed(2)}</p>
+                            <p><span class="font-medium">Itens vendidos:</span> ${totalItemsSold}</p>
+                            <p><span class="font-medium">Vendas registradas:</span> ${salesHistory.length}</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="font-bold text-gray-800 mb-2">Vendas por Item</h3>
+                        <div class="space-y-2">
+                            ${Object.entries(salesByItem).map(([itemName, data]) => `
+                                <div class="bg-gray-50 p-3 rounded">
+                                    <p class="font-medium">${itemName}</p>
+                                    <p class="text-sm text-gray-600">${data.quantity} unidades - R$ ${data.value.toFixed(2)}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="font-bold text-gray-800 mb-2">Histórico Recente</h3>
+                        <div class="space-y-2 max-h-32 overflow-y-auto">
+                            ${salesHistory.slice(-5).reverse().map(sale => `
+                                <div class="bg-blue-50 p-2 rounded text-sm">
+                                    <p class="font-medium">${sale.itemName}</p>
+                                    <p class="text-gray-600">${sale.quantity}x R$ ${sale.unitPrice.toFixed(2)} = R$ ${sale.totalValue.toFixed(2)}</p>
+                                    <p class="text-xs text-gray-500">${sale.date}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function clearAllItems() {
+            if (confirm('Tem certeza que deseja limpar TODOS os dados (itens + histórico de vendas)? Esta ação não pode ser desfeita.')) {
+                items = [];
+                salesHistory = [];
+                saveItems();
+                saveSalesHistory();
+                renderItems();
+                updateStats();
+            }
+        }
+
+        // Allow adding items by pressing Enter in modal
+        document.getElementById('modalItemName').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addItemFromModal();
+            }
+        });
+
+        document.getElementById('modalItemQuantity').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addItemFromModal();
+            }
+        });
+
+        document.getElementById('modalItemPrice').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addItemFromModal();
+            }
+        });
+
+        // Close modal when clicking outside
+        document.getElementById('modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        document.getElementById('statsModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeStatsModal();
+            }
+        });
+    </script>
+</body>
+</html>
