@@ -163,6 +163,41 @@
         </div>
     </div>
 
+    <!-- Clear All Confirmation Modal -->
+    <div id="clearModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" style="display: none;">
+        <div class="bg-white rounded-lg max-w-sm w-full p-6">
+            <div class="text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                    <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                </div>
+                
+                <h3 class="text-lg font-bold text-gray-900 mb-2">Limpar Todos os Dados?</h3>
+                <p class="text-sm text-gray-500 mb-6">
+                    Esta ação irá remover <strong>TODOS</strong> os itens do estoque e <strong>TODO</strong> o histórico de vendas permanentemente.
+                    <br><br>
+                    <span class="text-red-600 font-medium">Esta ação não pode ser desfeita!</span>
+                </p>
+                
+                <div class="flex space-x-3">
+                    <button 
+                        onclick="closeClearModal()" 
+                        class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-lg font-semibold transition-colors"
+                    >
+                        Cancelar
+                    </button>
+                    <button 
+                        onclick="confirmClearAll()" 
+                        class="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg font-semibold transition-colors"
+                    >
+                        Sim, Limpar Tudo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         let items = [];
         let salesHistory = [];  // Track all sales
@@ -492,14 +527,21 @@
         }
 
         function clearAllItems() {
-            if (confirm('Tem certeza que deseja limpar TODOS os dados (itens + histórico de vendas)? Esta ação não pode ser desfeita.')) {
-                items = [];
-                salesHistory = [];
-                saveItems();
-                saveSalesHistory();
-                renderItems();
-                updateStats();
-            }
+            document.getElementById('clearModal').style.display = 'flex';
+        }
+
+        function closeClearModal() {
+            document.getElementById('clearModal').style.display = 'none';
+        }
+
+        function confirmClearAll() {
+            items = [];
+            salesHistory = [];
+            saveItems();
+            saveSalesHistory();
+            renderItems();
+            updateStats();
+            closeClearModal();
         }
 
         // Allow adding items by pressing Enter in modal
@@ -531,6 +573,12 @@
         document.getElementById('statsModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeStatsModal();
+            }
+        });
+
+        document.getElementById('clearModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeClearModal();
             }
         });
     </script>
